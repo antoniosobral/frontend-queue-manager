@@ -5,7 +5,9 @@ import Logo from '../../images/logosobral.png';
 import { Container } from './styles';
 import api from '../../services/api';
 
-const socket = socketio('http://localhost:3333');
+require('dotenv/config');
+
+const socket = socketio(process.env.APP_URL);
 
 export default function Tv() {
   const [lastPassword, setLastPassword] = useState({

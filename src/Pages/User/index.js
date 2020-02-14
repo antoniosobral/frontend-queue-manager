@@ -10,7 +10,9 @@ import api from '../../services/api';
 
 import { Container, ButtonSenha, Scroll } from './styles';
 
-const socket = socketio('http://localhost:3333');
+require('dotenv/config');
+
+const socket = socketio(process.env.APP_URL);
 
 export default function User() {
   // const users = useSelector(state => state.auth);
