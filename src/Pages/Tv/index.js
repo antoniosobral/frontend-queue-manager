@@ -1,37 +1,71 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import socketio from 'socket.io-client';
 
+import { useSpeechSynthesis } from 'react-speech-kit';
+import Sound from 'react-sound';
+import som from '../../sounds/alert-croped.wav';
 import Logo from '../../images/logosobral.png';
 import { Container } from './styles';
 import api from '../../services/api';
 
 require('dotenv/config');
 
-const socket = socketio(process.env.APP_URL);
-
 export default function Tv() {
-  const [lastPassword, setLastPassword] = useState({
-    password_type: '-',
-    place: '-',
-  });
+  const { speak } = useSpeechSynthesis();
+  const [soundStatus, setSound] = useState(false);
+  const [lastPassword, setLastPassword] = useState({});
 
+  const userId = 'TV';
+
+  const socket = useMemo(
+    () =>
+      socketio('http://192.168.15.14:3333', {
+        query: {
+          user_id: userId,
+        },
+      }),
+    [userId]
+  );
+
+  async function getData() {
+    const response = await api.get('/passwords');
+
+    const called = response.data.filter(item => item.called);
+
+    called.reverse();
+
+    const last = called[0];
+
+    setLastPassword(last);
+  }
   useEffect(() => {
-    async function getData() {
-      const response = await api.get('/passwords');
-
-      response.data.map(item => (item.called ? setLastPassword(item) : item));
-    }
     getData();
   }, []);
 
+  function passwordSound() {
+    speak({ text: 'senha' });
+    speak({ text: lastPassword.password_type });
+    speak({ text: `guichê ${lastPassword.place}` });
+    setSound(!soundStatus);
+  }
+
   useEffect(() => {
-    socket.on('sendLastPassword', pass => {
+    socket.on('lastPasswordTv', pass => {
       setLastPassword(pass);
     });
-  }, [lastPassword]);
+
+    // const texto = `senha ${lastPassword.password_type} favor dirigir-se ao guichê ${lastPassword.place} `;
+  }, [lastPassword, socket]);
 
   return (
     <Container>
+      <Sound
+        url={som}
+        playStatus={soundStatus ? Sound.status.PLAYING : Sound.status.STOPPED}
+        onFinishedPlaying={() => {
+          passwordSound();
+        }}
+      />
       <img src={Logo} alt="Logo" />
 
       <div id="senha">

@@ -110,6 +110,32 @@ export const Container = styled.div`
   }
 `;
 
+export const Header = styled.div`
+  width: 100%;
+  padding: 20px 20px 0px 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+
+  h1 {
+    color: #bdbdbd;
+  }
+
+  button {
+    border: none;
+
+    width: 120px;
+    height: 40px;
+    border: none;
+
+    margin-top: 10px;
+    font-weight: bold;
+    color: #eeeeee;
+    background: #a20000;
+  }
+`;
+
 export const ButtonSenha = styled.div`
   border: none;
   button {

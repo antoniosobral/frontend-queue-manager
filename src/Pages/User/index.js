@@ -1,59 +1,90 @@
+/* eslint-disable camelcase */
 /* eslint-disable no-underscore-dangle */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Form, Select } from '@rocketseat/unform';
 import { FaHistory } from 'react-icons/fa';
 import { format, parseISO } from 'date-fns';
 import socketio from 'socket.io-client';
 import { toast } from 'react-toastify';
-// import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { signOut } from '../../store/modules/auth/actions';
+
 import api from '../../services/api';
 
-import { Container, ButtonSenha, Scroll } from './styles';
+import { Container, ButtonSenha, Scroll, Header } from './styles';
 
 require('dotenv/config');
 
-const socket = socketio(process.env.APP_URL);
-
-export default function User() {
-  // const users = useSelector(state => state.auth);
-
+export default function Test() {
   const [hasNext, sethasNext] = useState(false);
   const [place, setPlace] = useState();
-  const [passwords] = useState([]);
   const [calledPasswords, setCalledPasswords] = useState([]);
   const [toCallPasswords, setToCallPasswords] = useState([]);
 
-  useEffect(() => {
-    async function getData() {
-      const response = await api.get('/passwords');
+  const dispatch = useDispatch();
 
-      const called = [];
-      const toCall = [];
+  const [tableHeaders] = useState([
+    { id: '1', name: 'Guichê' },
+    { id: '2', name: 'Colaborador' },
+    { id: '3', name: 'Senha' },
+    { id: '4', name: 'Emitida em' },
+    { id: '5', name: 'Chamar novamente' },
+  ]);
 
-      response.data.map(item =>
-        item.called ? called.push(item) : toCall.push(item)
+  const user = useSelector(state => state.user.profile);
+  const socket = useMemo(
+    () =>
+      socketio('http://localhost:3333', {
+        query: {
+          user_id: user.name,
+        },
+      }),
+    [user.name]
+  );
+
+  async function getData() {
+    const response = await api.get('/passwords');
+
+    const called = response.data.filter(item => item.called);
+
+    let toCall = response.data.filter(item => !item.called);
+
+    const comum = [];
+    const priority = [];
+
+    if (toCall) {
+      toCall.map(item =>
+        item.queue === 'comum' ? comum.push(item) : priority.push(item)
       );
 
-      if (toCall.length > 0) {
-        sethasNext(true);
-      } else {
-        sethasNext(false);
-      }
-
-      called.reverse();
-
-      setCalledPasswords(called);
-      setToCallPasswords(toCall);
+      toCall = priority.concat(comum);
     }
+
+    called.reverse();
+
+    setToCallPasswords(toCall);
+    setCalledPasswords(called);
+
+    if (toCall.length > 0) {
+      sethasNext(true);
+    } else {
+      sethasNext(false);
+    }
+  }
+  useEffect(() => {
     getData();
   }, []);
 
   useEffect(() => {
-    socket.on('broadcast', pass => {
-      sethasNext(true);
-      setToCallPasswords([...toCallPasswords, pass]);
+    socket.on('updatePasswords', data => {
+      setToCallPasswords(data.to_call);
+      setCalledPasswords(data.to_called);
     });
-  }, [toCallPasswords]);
+
+    socket.on('updateRecall', data => {
+      setCalledPasswords(data);
+    });
+  }, [socket, calledPasswords]);
 
   const guiches = [
     { id: '1', title: 'Guichê 1' },
@@ -72,7 +103,7 @@ export default function User() {
     setPlace(e.target.value);
   }
 
-  async function handleCall(data) {
+  async function handleCall() {
     if (toCallPasswords.length === 0) {
       toast.error('Não há senhas para serem chamadas!');
       return;
@@ -81,23 +112,24 @@ export default function User() {
       toast.error('Selecione um guichê!');
       return;
     }
+    const next = toCallPasswords.shift();
+    const id = next._id;
 
-    let id = '';
-    for (let i = 0; i <= toCallPasswords.length; i = +1) {
-      if (!toCallPasswords[i].called) {
-        id = toCallPasswords[i]._id;
+    const password = await api.put(
+      `/passwords/?id=${id}&place=${place}&called_by=${user.name}`
+    );
 
-        toCallPasswords.splice(i, 1);
+    const to_call = toCallPasswords.filter(p => p._id !== id);
+    const to_called = [password.data, ...calledPasswords];
 
-        break;
-      }
-    }
+    socket.emit('updatePasswords', {
+      to_call,
+      to_called,
+    });
 
-    const response = await api.put(`/passwords/?id=${id}&place=${data.guiche}`);
+    socket.emit('lastPasswordTv', password.data);
 
-    setCalledPasswords([response.data, ...calledPasswords]);
-
-    if (toCallPasswords.length > 0) {
+    if (toCallPasswords.length) {
       sethasNext(true);
     } else {
       sethasNext(false);
@@ -110,16 +142,29 @@ export default function User() {
       return;
     }
     const id = password._id;
-
-    await api.put(`/passwords/?id=${id}&place=${place}`);
-
-    setCalledPasswords(
-      calledPasswords.map(pass => (pass._id === id ? { ...pass, place } : pass))
+    const pass = await api.put(
+      `/passwords/?id=${id}&place=${place}&called_by=${user.name}`
     );
+    const updatedCalled = calledPasswords.filter(p => p._id !== pass.data._id);
+
+    const to_called = [pass.data, ...updatedCalled];
+
+    socket.emit('lastPasswordTv', pass.data);
+    socket.emit('updateRecall', to_called);
+  }
+
+  function handleSignOut() {
+    dispatch(signOut());
   }
 
   return (
     <Container>
+      <Header>
+        <h1>Olá, {user.name}</h1>
+        <button type="button" onClick={handleSignOut}>
+          Sair
+        </button>
+      </Header>
       <div id="callForm">
         <Form onSubmit={handleCall}>
           <Select
@@ -146,8 +191,8 @@ export default function User() {
                   <th>Hora Emissão</th>
                 </tr>
               </thead>
-              {toCallPasswords.map(password => (
-                <tbody>
+              <tbody>
+                {toCallPasswords.map(password => (
                   <tr key={password._id}>
                     <td>{password.password_type}</td>
                     <td>
@@ -157,8 +202,8 @@ export default function User() {
                       )}
                     </td>
                   </tr>
-                </tbody>
-              ))}
+                ))}
+              </tbody>
             </table>
           </Scroll>
         </div>
@@ -168,16 +213,14 @@ export default function User() {
             <table>
               <thead>
                 <tr>
-                  <th>Guichê</th>
-                  <th>Colaborador</th>
-                  <th>Senha</th>
-                  <th>Hora Emissão</th>
-                  <th>Chamar Novamente</th>
+                  {tableHeaders.map(tableHead => (
+                    <th key={tableHead.id}>{tableHead.name}</th>
+                  ))}
                 </tr>
               </thead>
-              {calledPasswords.map(password => (
-                <tbody>
-                  <tr>
+              <tbody>
+                {calledPasswords.map(password => (
+                  <tr key={password._id}>
                     <td>{password.place}</td>
                     <td>{password.called_by}</td>
                     <td>{password.password_type}</td>
@@ -192,13 +235,13 @@ export default function User() {
                         <FaHistory
                           onClick={() => handleReCall(password)}
                           cursor="pointer"
-                          key={passwords._id}
+                          key={password._id}
                         />
                       </div>
                     </td>
                   </tr>
-                </tbody>
-              ))}
+                ))}
+              </tbody>
             </table>
           </Scroll>
         </div>
