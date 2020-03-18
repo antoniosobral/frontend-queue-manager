@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Route, Redirect } from 'react-router-dom';
@@ -12,14 +13,14 @@ export default function RouteWrapper({
   const { signed } = store.getState().auth;
 
   if (!signed && isPrivate) {
-    return <Redirect to="/" />;
+    return <Redirect to="/filas" />;
   }
 
   if (signed && !isPrivate) {
     return <Redirect to="/dashboard" />;
   }
 
-  return <Route rest={rest} component={Component} />;
+  return <Route {...rest} component={Component} />;
 }
 
 RouteWrapper.propTypes = {
