@@ -15,7 +15,7 @@ import api from '../../services/api';
 
 import { Container, ButtonSenha, Scroll, Header } from './styles';
 
-require('dotenv/config');
+require('dotenv').config();
 
 export default function Test() {
   const [hasNext, sethasNext] = useState(false);
@@ -57,7 +57,7 @@ export default function Test() {
   const user = useSelector(state => state.user.profile);
   const socket = useMemo(
     () =>
-      socketio('http://192.168.15.14:3333', {
+      socketio('http://159.89.181.231', {
         query: {
           user_id: user.name,
         },

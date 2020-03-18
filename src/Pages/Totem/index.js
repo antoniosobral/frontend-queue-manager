@@ -22,7 +22,7 @@ export default function Totem() {
   const user = 'TOTEM';
   const socket = useMemo(
     () =>
-      socketio('http://192.168.15.14:3333', {
+      socketio('http://159.89.181.231', {
         query: {
           user_id: user.name,
         },
