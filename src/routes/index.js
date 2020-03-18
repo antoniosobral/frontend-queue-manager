@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, BrowserRouter } from 'react-router-dom';
+import { Switch } from 'react-router-dom';
 import Route from './Route';
 
 import User from '../Pages/User';
@@ -10,14 +10,12 @@ import Totem from '../Pages/Totem';
 
 export default function Routes() {
   return (
-    <BrowserRouter>
-      <Switch>
-        <Route path="/" exact component={SignIn} />
-        <Route path="/tv" component={Tv} isPrivate />
-        <Route path="/dashboard" component={User} isPrivate />
-        <Route path="/register" component={SignUp} isPrivate />
-        <Route path="/totem" component={Totem} isPrivate />
-      </Switch>
-    </BrowserRouter>
+    <Switch>
+      <Route path="/" exact component={SignIn} />
+      <Route path="/tv" component={Tv} isPrivate />
+      <Route path="/dashboard" component={User} isPrivate />
+      <Route path="/register" component={SignUp} isPrivate />
+      <Route path="/totem" component={Totem} isPrivate />
+    </Switch>
   );
 }

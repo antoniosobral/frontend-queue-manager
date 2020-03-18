@@ -11,7 +11,6 @@ import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { signOut } from '../../store/modules/auth/actions';
-import Totem from '../Totem';
 
 import api from '../../services/api';
 
@@ -206,7 +205,7 @@ export default function Test() {
 
   return (
     <Container>
-      <Link to={Totem}>
+      <Link to="/totem">
         <button type="button">tv</button>
       </Link>
 
