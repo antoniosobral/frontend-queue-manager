@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
-import React, { useState, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
+import socketio from 'socket.io-client';
+
 import ReactToPrint from 'react-to-print';
 import { Container, Password, Content, PrintPassword, Pass } from './styles';
 import api from '../../services/api';
@@ -9,6 +11,24 @@ import logo from '../../images/logosobral.png';
 
 export default function Totem() {
   const [passInfo, setPassinfo] = useState({ password: '' });
+  const [queues] = useState([
+    { queue: 'comum', caption: 'ATENDIMENTO', color: '#A20000' },
+    { queue: 'priority', caption: 'ATENDIMENTO PRIORITÁRIO', color: '#A20000' },
+    { queue: 'results', caption: 'RESULTADOS', color: '#A20000' },
+    { queue: 'pendencies', caption: 'PENDÊNCIAS', color: '#A20000' },
+    { queue: 'budgets', caption: 'ORÇAMENTOS', color: '#A20000' },
+  ]);
+
+  const user = 'TOTEM';
+  const socket = useMemo(
+    () =>
+      socketio('http://192.168.15.14:3333', {
+        query: {
+          user_id: user.name,
+        },
+      }),
+    [user.name]
+  );
 
   const print = useRef();
   async function handleClick(line) {
@@ -17,9 +37,10 @@ export default function Totem() {
 
     setPassinfo({ password: password.data.password_type });
 
-    toast.success('Sua senha foi emitida com sucesso!');
-
     print.current.click();
+
+    socket.emit('newPassword', password.data);
+    toast.success('Sua senha foi emitida com sucesso!');
   }
 
   const componentRef = useRef();
@@ -42,19 +63,13 @@ export default function Totem() {
             <h1>{passInfo.password}</h1>
           </PrintPassword>
         </div>
-        <Password id="comum" onClick={() => handleClick('comum')}>
-          <h2>COMUM</h2>
-        </Password>
-        <Password id="priority" onClick={() => handleClick('priority')}>
-          <ReactToPrint
-            trigger={() => (
-              <Pass>
-                <h2>PRIORITÁRIA</h2>
-              </Pass>
-            )}
-            content={() => componentRef.current}
-          />
-        </Password>
+        {queues.map(q => (
+          <>
+            <Password key={q.queue} onClick={() => handleClick(q.queue)}>
+              <h2>{q.caption}</h2>
+            </Password>
+          </>
+        ))}
       </Content>
     </Container>
   );

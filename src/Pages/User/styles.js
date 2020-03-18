@@ -15,9 +15,15 @@ export const Container = styled.div`
   }
 
   #callForm {
-    margin: 20px;
-    max-width: 400px;
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+
     width: 100%;
+    max-width: 97.2%;
+    margin: 20px;
+
     max-height: 80px;
     border: 1px solid #eeeeee;
     background: #fff;
@@ -50,6 +56,23 @@ export const Container = styled.div`
         height: 50px;
         background: #fff;
         border-bottom: 1px solid #a20000;
+      }
+    }
+
+    #check {
+      margin: 0 10px 0 95px;
+      width: 100%;
+      max-width: 70%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      .checkboxes {
+        label {
+          margin-left: 15px;
+          color: #757575;
+          font-size: 15px;
+        }
       }
     }
   }
@@ -138,6 +161,7 @@ export const Header = styled.div`
 
 export const ButtonSenha = styled.div`
   border: none;
+  margin-left: 55px;
   button {
     width: 120px;
     height: 40px;
@@ -155,7 +179,8 @@ export const ButtonSenha = styled.div`
 
 export const Scroll = styled(PerfectScrollBar)`
   width: 100%;
-  max-height: 500px;
+  height: 100%;
+  max-height: 430px;
   table {
     border-collapse: collapse;
     width: 100%;

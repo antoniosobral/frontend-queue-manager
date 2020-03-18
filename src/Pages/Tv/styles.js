@@ -36,7 +36,7 @@ export const Container = styled.div`
     h2 {
       margin: auto;
       font-size: 1000%;
-      color: green;
+      color: #a20000;
     }
     h3 {
       font-size: 300%;

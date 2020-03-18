@@ -13,7 +13,10 @@ require('dotenv/config');
 export default function Tv() {
   const { speak } = useSpeechSynthesis();
   const [soundStatus, setSound] = useState(false);
-  const [lastPassword, setLastPassword] = useState({});
+  const [lastPassword, setLastPassword] = useState({
+    password_type: '-',
+    place: '-',
+  });
 
   const userId = 'TV';
 
@@ -27,18 +30,26 @@ export default function Tv() {
     [userId]
   );
 
-  async function getData() {
-    const response = await api.get('/passwords');
-
-    const called = response.data.filter(item => item.called);
-
-    called.reverse();
-
-    const last = called[0];
-
-    setLastPassword(last);
-  }
   useEffect(() => {
+    async function getData() {
+      const response = await api.get('/passwords');
+
+      const called = response.data.filter(item => item.called);
+
+      if (called.length) {
+        called.sort((a, b) => {
+          const dateA = new Date(a.updatedAt);
+          const dateB = new Date(b.updatedAt);
+          return dateA - dateB;
+        });
+
+        called.reverse();
+
+        const last = called[0];
+
+        setLastPassword(last);
+      }
+    }
     getData();
   }, []);
 
@@ -50,11 +61,9 @@ export default function Tv() {
   }
 
   useEffect(() => {
-    socket.on('lastPasswordTv', pass => {
+    socket.once('lastPasswordTv', pass => {
       setLastPassword(pass);
     });
-
-    // const texto = `senha ${lastPassword.password_type} favor dirigir-se ao guichê ${lastPassword.place} `;
   }, [lastPassword, socket]);
 
   return (
