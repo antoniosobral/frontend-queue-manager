@@ -9,7 +9,6 @@ import { format, parseISO } from 'date-fns';
 import socketio from 'socket.io-client';
 import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { signOut } from '../../store/modules/auth/actions';
 
 import api from '../../services/api';
@@ -205,10 +204,6 @@ export default function Test() {
 
   return (
     <Container>
-      <Link to="/totem">
-        <button type="button">tv</button>
-      </Link>
-
       <Header>
         <h1>Olá, {user.name}</h1>
         <button type="button" onClick={handleSignOut}>
